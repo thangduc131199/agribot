@@ -1,0 +1,5 @@
+<library path="lib/libjoint_steer_controller_lib">
+	<class name="tractor_controller/JointSteerController"
+				 type="tractor_controller::JointSteerController"
+				 base_class_type="controller_interface::ControllerBase" />
+</library>

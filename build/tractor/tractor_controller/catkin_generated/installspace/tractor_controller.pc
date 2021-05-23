@@ -1,0 +1,8 @@
+prefix=/home/ducthang/agribot/install
+
+Name: tractor_controller
+Description: Description of tractor_controller
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -ltractor_controller
+Requires: angles controller_interface control_msgs control_toolbox forward_command_controller realtime_tools urdf

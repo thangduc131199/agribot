@@ -1,0 +1,5 @@
+<library path="lib/libtractor_controller">
+      <class name="tractor_controller/TractorController" type="tractor_controller::TractorController"
+                        base_class_type="controller_interface::ControllerBase" />
+      <description>This is TractorController plugin.</description>
+</library>
