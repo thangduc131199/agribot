@@ -97,7 +97,7 @@ def get_linear_model_matrix(v, phi, delta):
     C = np.zeros(NX)
     C[0] = DT * (v*math.cos(phi) + v * math.sin(phi) * phi)
     C[1] = DT * (v*math.sin(phi) - v * math.cos(phi) * phi)
-    C[2] = v*math.tan(delta)/WB_ - v * delta / (WB_ * math.cos(delta) ** 2)
+    C[2] = (v*math.tan(delta)/WB_ - v * delta / (WB_ * math.cos(delta) ** 2))*DT
     #C=C.reshape((NX,1))
     return A, B, C
 
@@ -722,5 +722,5 @@ def main2():
 
 
 if __name__ == '__main__':
-    main3()
+    main()
     #main2()
