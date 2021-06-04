@@ -16,18 +16,18 @@ import tractor_controller
 
 # Covariance for EKF simulation
 Q = np.diag([
-    0.01,  # variance of location on x-axis
-    0.01,  # variance of location on y-axis
+    0.1,  # variance of location on x-axis
+    0.1,  # variance of location on y-axis
     np.deg2rad(1.0),  # variance of yaw angle
-    0.01  # variance of velocity
+    1  # variance of velocity
 ]) ** 2  # predict state covariance
-R = np.diag([0.5, 0.5]) ** 2  # Observation x,y position covariance
+R = np.diag([1.0, 1.0]) ** 2  # Observation x,y position covariance
 
 #  Simulation parameter
 INPUT_NOISE = np.diag([1.0, np.deg2rad(30.0)]) ** 2
 GPS_NOISE = np.diag([0.5, 0.5]) ** 2
 
-DT = 0.05  # time tick [s]
+DT = 0.1  # time tick [s]
 SIM_TIME = 50.0  # simulation time [s]
 
 show_animation = True
@@ -175,6 +175,7 @@ def main():
     hxTrue = xTrue
     hxDR = xTrue
     hz = np.zeros((2, 1))
+    htime=time
 
     while SIM_TIME >= time:
         time += DT
@@ -189,6 +190,7 @@ def main():
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
         hz = np.hstack((hz, z))
+        htime=np.hstack((htime,time))
 
         if show_animation:
             plt.cla()
@@ -206,6 +208,10 @@ def main():
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.001)
+    plt.cla()
+    plt.plot(htime,hxEst[3,:],"-r")
+    plt.show()
+
 def main1():
     print(__file__ + " start!!")
     tractor=tractor_controller.TractorController()
@@ -269,4 +275,4 @@ def main1():
     tractor.tractor()
 
 if __name__ == '__main__':
-    main1()
+    main()

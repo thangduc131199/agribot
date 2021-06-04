@@ -453,7 +453,8 @@ def do_simulation_gazebo(cx, cy, cyaw, ck, sp, dl, initial_state,v):
     t = [0.0]
     d = [0.0]
     target_ind, _ = calc_nearest_index(state, cx, cy, cyaw, 0)
-
+    dx=[0.0]
+    dy=[0.0]
     odelta = None
     u_state=tractor_.state_ang()
     cyaw = smooth_yaw(cyaw)
@@ -470,14 +471,16 @@ def do_simulation_gazebo(cx, cy, cyaw, ck, sp, dl, initial_state,v):
         
 
         tractor_.tractor(v,di)
-        #tm.sleep(DT*0.7)
+        tm.sleep(DT*0.7)
         
         x0,y0,yaw0 = tractor_.state()
 
         state = State(x0,y0,yaw0)
+       
         time = time + DT
         u_state=tractor_.state_ang()
-
+        dx.append(state.x-xref[0,0])
+        dy.append(state.y-xref[1,0])
         x.append(state.x)
         y.append(state.y)
         yaw.append(state.yaw)
@@ -504,7 +507,7 @@ def do_simulation_gazebo(cx, cy, cyaw, ck, sp, dl, initial_state,v):
                       ", speed[km/h]:" + str(round(v * 3.6, 2)))
             plt.pause(0.0005)
 
-    return t, x, y, yaw, d
+    return t, x, y, yaw, d, dx,dy
 
 
 
@@ -679,7 +682,7 @@ def main3():
 
     initial_state = State(x=0, y=0, yaw=-0.5)
 
-    t, x, y, yaw, d= do_simulation_gazebo(cx, cy, cyaw, ck, sp, dl, initial_state,TARGET_SPEED)
+    t, x, y, yaw, d,dx,dy= do_simulation_gazebo(cx, cy, cyaw, ck, sp, dl, initial_state,TARGET_SPEED)
     print(d[0:20])
     dd=[0.0]
     for i in range(len(d)-1):
@@ -708,8 +711,19 @@ def main3():
         plt.grid(True)
         plt.xlabel("Time [s]")
         plt.ylabel("[rad/s]")
+        
 
-
+        plt.subplots()
+        plt.plot(t[1:], dx[1:], "-b", label="x_error")
+        plt.grid(True)
+        plt.xlabel("Time [s]")
+        plt.ylabel("m")
+        
+        plt.subplots()
+        plt.plot(t[1:], dy[1:], "-b", label="y_error")
+        plt.grid(True)
+        plt.xlabel("Time [s]")
+        plt.ylabel("m")
         plt.show()
 
 def main2():
@@ -722,5 +736,5 @@ def main2():
     #ahihi
 
 if __name__ == '__main__':
-    main()
+    main3()
     #main2()

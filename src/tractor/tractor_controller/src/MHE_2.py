@@ -15,23 +15,18 @@ H=np.zeros((2,4))
 H[0,0]=1
 H[1,1]=1
 DU_TH=0.25
-INPUT_NOISE = np.diag([np.deg2rad(10.0),0.1])
-GPS_NOISE = np.diag([0.5, 0.5]) 
+INPUT_NOISE = np.diag([np.deg2rad(30.0),0.2])**2
+GPS_NOISE = np.diag([0.5, 0.5])**2 
 SIM_TIME=30
 
 Q=np.eye(NX)
-Q[0,0]=7
-Q[1,1]=7
-Q[2,2]=7
-Q[3,3]=0.5
-P1=np.eye(2)
-P2=np.eye(2)
+P=np.eye(2)*0.2
 
 show_animation=True
 def calc_input():
-    a = 0.0  # [m^2/s]
-    yawrate = 0.2 # [rad/s]
-    u = np.array([[yawrate],[a]])
+    v = 1  # [m/s]
+    yawrate = 0.1 # [rad/s]
+    u = np.array([[yawrate],[v]])
     return u
 
 def observation(x_True,u):
@@ -45,22 +40,18 @@ def observation(x_True,u):
     return x_True,z,ud
 
 def motion_model(x, u):
-    F = np.array([[1.0, 0  , 0  , m.cos(x[2])*DT],
-                  [0  , 1.0, 0  , m.sin(x[2])*DT],
-                  [0  , 0  , 1.0, 0               ],
-                  [0  , 0  , 0  , 1.0             ]])
+    F = np.array([[1.0, 0, 0, 0],
+                  [0, 1.0, 0, 0],
+                  [0, 0, 1.0, 0],
+                  [0, 0, 0, 0]])
 
-    B = np.array([[0.0, 0.0],
-                  [0.0, 0.0],
-                  [DT, 0.0],
-                  [0.0, DT]])
+    B = np.array([[0,DT * m.cos(x[2])],
+                  [0,DT * m.sin(x[2])],
+                  [DT, 0],
+                  [0.0, 1.0]])
 
     x = F @ x + B @ u
-
     return x
-
-
-
 
 
 def observation_model(x):
@@ -77,13 +68,14 @@ def observation_model(x):
 def get_linear_model_matrix(v,phi):
     A=np.eye(NX)
     A[0,2]=-v*m.sin(phi)*DT
-    A[0,3]=m.cos(phi)*DT
     A[1,2]=v*m.cos(phi)*DT
-    A[1,3]=m.sin(phi)*DT
+    A[3,3]=0
 
     B=np.zeros((NX,NU))
+    B[0,1]=DT*m.cos(phi)
+    B[1,1]=DT*m.sin(phi)
     B[2,0]=DT
-    B[3,1]=DT
+    B[3,1]=1
 
     C=np.zeros(NX)
     C[0]=v*m.sin(phi)*phi*DT
@@ -106,17 +98,16 @@ def get_nparray_from_matrix(x):
 def MHE(x_pre,y,u):
 
     x_est=cvxpy.Variable((NX,T))
-    u_est=cvxpy.Variable((2,T))
+
     cost=0
     constraints=[]
 
     for t in range(T):
-        cost+=cvxpy.quad_form(y[:,t]-H@x_est[:,t],P1)
+        cost+=cvxpy.quad_form(y[:,t]-H@x_est[:,t],P)
         cost+=cvxpy.quad_form(x_est[:,t]-x_pre[:,t],Q)
-        cost+=cvxpy.quad_form(u_est[:,t]-u[:,t],P2)
-        A,B,C=get_linear_model_matrix(x_pre[3,t],x_pre[2,t])
+        A,B,C=get_linear_model_matrix(u[1,t],x_pre[2,t])
         if t!=T-1:
-            constraints+=[x_est[:,t+1]==A@x_est[:,t]+B@u_est[:,t]+C]
+            constraints+=[x_est[:,t+1]==A@x_est[:,t]+B@u[:,t]+C]
     
     prob = cvxpy.Problem(cvxpy.Minimize(cost), constraints)
     prob.solve(solver=cvxpy.ECOS, verbose=False)
@@ -145,7 +136,7 @@ def update_observation(z_,u_,z,u):
     return z_,u_
 
 def iterative_MHE(x_pre,y,u):
-    for i in range(5):
+    for i in range(10):
         pod=x_pre[2:,:]
         x_est=MHE(x_pre,y,u)
         od=x_est[2:,:]
@@ -164,13 +155,13 @@ def do_MHE():
     u_=np.zeros((NU,T))
     i_=0
     x_pre=np.zeros((NX,T))
-    for i in range(T):
-        x_pre[3,i]=3
+    #for i in range(T):
+     #   x_pre[3,i]=5
     
 
     time=0
     x_True=np.zeros((4,1))
-    x_True[3,0]=5 #v=0.5 m/s
+    #x_True[3,0]=5 #v=0.5 m/s
     hx_true=x_True
     hz=None
     hx=None
@@ -220,7 +211,6 @@ def do_MHE():
             plt.grid(True)
             plt.pause(0.001)
     plt.cla()
-    plt.subplot()
     plt.plot(htime[0:300],hx[3,0:300],"-r")
     plt.grid(True)
     plt.show()
@@ -228,27 +218,5 @@ def do_MHE():
 
 if __name__=='__main__':
     do_MHE()
-
-
-        
-    
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
 
 
